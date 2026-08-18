@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalender & Notizen</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #333; }
+        header { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 16px; text-align: center; position: sticky; top: 0; z-index: 100; }
+        header h1 { font-size: 24px; }
+        .tabs { display: flex; background: white; border-bottom: 2px solid #e5e7eb; position: sticky; top: 60px; z-index: 90; overflow-x: auto; }
+        .tab-btn { flex: 1; min-width: 100px; padding: 12px; border: none; background: white; cursor: pointer; font-size: 14px; color: #666; border-bottom: 3px solid transparent; white-space: nowrap; }
+        .tab-btn.active { color: #6366f1; border-bottom-color: #6366f1; background: #f3f4f6; }
+        .content { display: none; padding: 16px; padding-bottom: 60px; }
+        .content.active { display: block; }
+        .card { background: white; border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 16px; }
+        .weekday { text-align: center; font-weight: 600; color: #666; font-size: 12px; padding: 8px 0; }
+        .day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #f9fafb; cursor: pointer; border: 2px solid transparent; font-size: 13px; }
+        .day:hover { background: #ede9fe; }
+        .day.today { background: #dbeafe; border-color: #0084ff; font-weight: 600; color: #0084ff; }
+        .day.selected { background: #6366f1; color: white; border-color: #6366f1; }
+        .day.other-month { color: #ccc; cursor: default; }
+        .day.has-event::after { content: '•'; position: absolute; font-size: 20px; color: #f59e0b; bottom: -4px; }
+        input, textarea { padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-family: inherit; font-size: 14px; width: 100%; }
+        textarea { min-height: 80px; resize: vertical; }
+        input:focus, textarea:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .btn-primary { background: #6366f1; color: white; }
+        .btn-primary:hover { background: #4f46e5; }
+        .btn-danger { background: #ef4444; color: white; }
+        .item { background: #f9fafb; padding: 12px; border-radius: 6px; border-left: 4px solid #6366f1; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .item.done { opacity: 0.6; background: #f0fdf4; }
+        .item.done .item-text { text-decoration: line-through; color: #999; }
+        .item-status { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
+        .item-text { flex: 1; }
+        .item-date { font-size: 11px; color: #999; margin-bottom: 4px; }
+        .item-time { font-size: 12px; color: #6366f1; font-weight: 600; }
+        .btn-action { background: none; border: none; color: #999; cursor: pointer; padding: 4px; flex-shrink: 0; font-size: 14px; }
+        .btn-action:hover { color: #6366f1; }
+        .btn-delete { background: none; border: none; color: #999; cursor: pointer; padding: 4px; flex-shrink: 0; }
+        .btn-delete:hover { color: #ef4444; }
+        .empty { text-align: center; padding: 40px 16px; color: #999; }
+        .month-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .month-header h3 { font-size: 16px; }
+        .month-header button { background: #6366f1; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .toast { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #333; color: white; padding: 12px 16px; border-radius: 6px; z-index: 1000; animation: slideUp 0.3s; }
+        .toast.success { background: #10b981; }
+        @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .voice-btn { padding: 10px 12px; background: #e5e7eb; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+        .voice-btn.recording { background: #ef4444; color: white; }
+        .input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+        .input-row > * { flex: 1; }
+        .input-row .voice-btn { flex: 0; width: auto; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 8px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+        .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
+        .modal-buttons button { flex: 1; }
+    </style>
+</head>
+<body>
+    <header><h1>📅 Kalender & Notizen</h1></header>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('calendar')">Kalender</button>
+        <button class="tab-btn" onclick="switchTab('week')">Woche</button>
+        <button class="tab-btn" onclick="switchTab('notes')">Notizen</button>
+        <button class="tab-btn" onclick="switchTab('settings')">Einstellungen</button>
+    </div>
+    <div id="calendar" class="content active">
+        <div class="card">
+            <div class="month-header">
+                <button onclick="prevMonth()">← Zurück</button>
+                <h3 id="monthName"></h3>
+                <button onclick="nextMonth()">Weiter →</button>
+            </div>
+            <div class="calendar" id="calendarGrid"></div>
+        </div>
+        <div class="card">
+            <h3 id="selectedDateText"></h3>
+            <div class="input-row">
+                <input type="text" id="eventTitle" placeholder="Termin">
+                <input type="time" id="eventTime">
+                <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+            </div>
+            <button class="btn btn-primary" onclick="addEvent()" style="width: 100%;">+ Termin</button>
+            <div id="eventsList" style="margin-top: 12px;"></div>
+        </div>
+    </div>
+    <div id="week" class="content">
+        <div class="card">
+            <div class="month-header">
+                <button onclick="prevWeek()">← Zurück</button>
+                <h3 id="weekInfo"></h3>
+                <button onclick="nextWeek()">Weiter →</button>
+            </div>
+            <div id="weekEventsList"></div>
+        </div>
+    </div>
+    <div id="notes" class="content">
+        <div class="card">
+            <h3>📝 Neue Notiz</h3>
+            <textarea id="noteInput" placeholder="Notiz schreiben..."></textarea>
+            <div class="input-row" style="margin-top: 12px;">
+                <button class="btn btn-primary" onclick="addNote()">Speichern</button>
+                <button class="voice-btn" id="voiceNoteBtn" onclick="toggleVoiceNote()">🎤</button>
+            </div>
+            <div id="notesList" style="margin-top: 16px;"></div>
+        </div>
+    </div>
+    <div id="settings" class="content">
+        <div class="card">
+            <h3>📤 Export</h3>
+            <button class="btn btn-primary" onclick="exportJSON()" style="width: 100%; margin-bottom: 8px;">JSON Export</button>
+            <button class="btn btn-primary" onclick="exportCSV()" style="width: 100%; margin-bottom: 16px;">CSV Export</button>
+            <h3 style="margin-top: 16px;">⚠️ Löschen</h3>
+            <button class="btn btn-danger" onclick="deleteAll()" style="width: 100%;">Alle Daten löschen</button>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalTitle"></div>
+            <input type="text" id="editTitle" placeholder="Titel/Text" style="margin-bottom: 12px;">
+            <input type="time" id="editTime" style="margin-bottom: 12px; display: none;">
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="saveEdit()">Speichern</button>
+                <button class="btn" style="background: #e5e7eb;" onclick="closeModal()">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ASSEMBLY_AI_TOKEN = '60ceae17ec34415088596d2e6feedcd8';
+        let app = { currentDate: new Date(), selectedDate: new Date(), weekStart: new Date(), events: [], notes: [] };
+        let isRecording = false;
+        let mediaRecorder;
+        let audioChunks = [];
+        let editingItem = null;
+
+        function init() { loadData(); renderCalendar(); renderNotes(); renderEvents(); renderWeekEvents(); }
+        function switchTab(tab) { document.querySelectorAll('.content').forEach(e => e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active')); document.getElementById(tab).classList.add('active'); event.target.classList.add('active'); }
+        function renderCalendar() { const y = app.currentDate.getFullYear(), m = app.currentDate.getMonth(); const first = new Date(y, m, 1), last = new Date(y, m + 1, 0); const start = first.getDay() === 0 ? 6 : first.getDay() - 1; const days = last.getDate(); document.getElementById('monthName').textContent = app.currentDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' }); let html = '<div style="grid-column: 1/-1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">'; html += '<div class="weekday">Mo</div><div class="weekday">Di</div><div class="weekday">Mi</div><div class="weekday">Do</div><div class="weekday">Fr</div><div class="weekday">Sa</div><div class="weekday">So</div>'; for (let i = 0; i < start; i++) html += '<div class="day other-month"></div>'; for (let i = 1; i <= days; i++) { const d = new Date(y, m, i); const isToday = isSameDate(d, new Date()); const isSelected = isSameDate(d, app.selectedDate); const hasEvent = app.events.some(e => isSameDate(new Date(e.date), d)); let cls = 'day'; if (isToday) cls += ' today'; if (isSelected) cls += ' selected'; if (hasEvent) cls += ' has-event'; html += `<div class="${cls}" onclick="selectDate(new Date(${y}, ${m}, ${i}))" style="position: relative;">${i}</div>`; } for (let i = 1; i <= (42 - days - start); i++) html += '<div class="day other-month"></div>'; html += '</div>'; document.getElementById('calendarGrid').innerHTML = html; updateSelectedDateDisplay(); }
+        function selectDate(date) { app.selectedDate = new Date(date); renderCalendar(); renderEvents(); }
+        function prevMonth() { app.currentDate.setMonth(app.currentDate.getMonth() - 1); renderCalendar(); }
+        function nextMonth() { app.currentDate.setMonth(app.currentDate.getMonth() + 1); renderCalendar(); }
+        function prevWeek() { app.weekStart.setDate(app.weekStart.getDate() - 7); renderWeekEvents(); }
+        function nextWeek() { app.weekStart.setDate(app.weekStart.getDate() + 7); renderWeekEvents(); }
+        function updateSelectedDateDisplay() { document.getElementById('selectedDateText').textContent = app.selectedDate.toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
+        function isSameDate(d1, d2) { return d1.getDate() === d2.getDate() && d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear(); }
+        function formatDate(date) { const y = date.getFullYear(), m = String(date.getMonth() + 1).padStart(2, '0'), d = String(date.getDate()).padStart(2, '0'); return `${y}-${m}-${d}`; }
+        function getWeekDates() { const start = new Date(app.weekStart); start.setDate(start.getDate() - (start.getDay() === 0 ? 6 : start.getDay() - 1)); const dates = []; for (let i = 0; i < 7; i++) { const d = new Date(start); d.setDate(d.getDate() + i); dates.push(d); } return dates; }
+        function renderWeekEvents() { const weekDates = getWeekDates(); const weekEvents = []; app.events.forEach(e => { const eDate = new Date(e.date); weekDates.forEach(d => { if (isSameDate(d, eDate)) weekEvents.push({ ...e, actualDate: d }); }); }); weekEvents.sort((a, b) => new Date(a.actualDate).getTime() - new Date(b.actualDate).getTime() || a.time.localeCompare(b.time)); const start = weekDates[0].toLocaleDateString('de-DE', { day: 'numeric', month: 'short' }); const end = weekDates[6].toLocaleDateString('de-DE', { day: 'numeric', month: 'short' }); document.getElementById('weekInfo').textContent = `${start} - ${end}`; let html = weekEvents.length === 0 ? '<div class="empty">Keine Termine diese Woche</div>' : weekEvents.map(e => `<div class="item"><div class="item-text"><div class="item-date">${new Date(e.actualDate).toLocaleDateString('de-DE', { weekday: 'short', month: 'short', day: 'numeric' })} ${e.time}</div><div>${e.title}</div></div><button class="btn-action" onclick="openEditEvent(${e.id})">✏️</button><button class="btn-delete" onclick="deleteEvent(${e.id})">✕</button></div>`).join(''); document.getElementById('weekEventsList').innerHTML = html; }
+        function addEvent() { const title = document.getElementById('eventTitle').value.trim(); const time = document.getElementById('eventTime').value; if (!title) return showToast('Termin erforderlich', false); app.events.push({ id: Date.now(), date: formatDate(app.selectedDate), title, time: time || '10:00' }); saveData(); document.getElementById('eventTitle').value = ''; document.getElementById('eventTime').value = ''; renderCalendar(); renderEvents(); renderWeekEvents(); showToast('Termin hinzugefügt ✓', true); }
+        function renderEvents() { const dateStr = formatDate(app.selectedDate); const events = app.events.filter(e => e.date === dateStr); let html = events.length === 0 ? '<div class="empty">Keine Termine</div>' : events.sort((a, b) => a.time.localeCompare(b.time)).map(e => `<div class="item"><div class="item-text"><div class="item-time">${e.time}</div><div>${e.title}</div></div><button class="btn-action" onclick="openEditEvent(${e.id})">✏️</button><button class="btn-delete" onclick="deleteEvent(${e.id})">✕</button></div>`).join(''); document.getElementById('eventsList').innerHTML = html; }
+        function deleteEvent(id) { app.events = app.events.filter(e => e.id !== id); saveData(); renderCalendar(); renderEvents(); renderWeekEvents(); }
+        function openEditEvent(id) { const e = app.events.find(x => x.id === id); if (e) { editingItem = { type: 'event', id, ...e }; document.getElementById('modalTitle').textContent = '✏️ Termin bearbeiten'; document.getElementById('editTitle').value = e.title; document.getElementById('editTime').value = e.time; document.getElementById('editTime').style.display = 'block'; document.getElementById('editModal').classList.add('active'); } }
+        function addNote() { const text = document.getElementById('noteInput').value.trim(); if (!text) return showToast('Notiz erforderlich', false); app.notes.push({ id: Date.now(), text, done: false, created: new Date().toISOString() }); saveData(); document.getElementById('noteInput').value = ''; renderNotes(); showToast('Notiz gespeichert ✓', true); }
+        function renderNotes() { let html = app.notes.length === 0 ? '<div class="empty">Keine Notizen</div>' : [...app.notes].reverse().map(n => `<div class="item ${n.done ? 'done' : ''}"><button class="item-status" onclick="toggleStatus(${n.id})">${n.done ? '✅' : '☐'}</button><div class="item-text"><div class="item-date">${new Date(n.created).toLocaleDateString('de-DE')}</div><div>${n.text}</div></div><button class="btn-action" onclick="openEditNote(${n.id})">✏️</button><button class="btn-delete" onclick="deleteNote(${n.id})">✕</button></div>`).join(''); document.getElementById('notesList').innerHTML = html; }
+        function toggleStatus(id) { const n = app.notes.find(x => x.id === id); if (n) { n.done = !n.done; saveData(); renderNotes(); } }
+        function deleteNote(id) { app.notes = app.notes.filter(n => n.id !== id); saveData(); renderNotes(); }
+        function openEditNote(id) { const n = app.notes.find(x => x.id === id); if (n) { editingItem = { type: 'note', id, ...n }; document.getElementById('modalTitle').textContent = '✏️ Notiz bearbeiten'; document.getElementById('editTitle').value = n.text; document.getElementById('editTime').style.display = 'none'; document.getElementById('editModal').classList.add('active'); } }
+        function saveEdit() { if (!editingItem) return; const val = document.getElementById('editTitle').value.trim(); if (!val) return showToast('Inhalt erforderlich', false); if (editingItem.type === 'event') { const e = app.events.find(x => x.id === editingItem.id); if (e) { e.title = val; e.time = document.getElementById('editTime').value || e.time; saveData(); renderCalendar(); renderEvents(); renderWeekEvents(); showToast('Termin aktualisiert ✓', true); } } else if (editingItem.type === 'note') { const n = app.notes.find(x => x.id === editingItem.id); if (n) { n.text = val; saveData(); renderNotes(); showToast('Notiz aktualisiert ✓', true); } } closeModal(); }
+        function closeModal() { document.getElementById('editModal').classList.remove('active'); editingItem = null; }
+        async function toggleVoice() { if (isRecording) { mediaRecorder.stop(); return; } try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; isRecording = true; document.getElementById('voiceBtn').classList.add('recording'); document.getElementById('voiceBtn').textContent = '🛑'; mediaRecorder.ondataavailable = e => audioChunks.push(e.data); mediaRecorder.onstop = async () => { isRecording = false; document.getElementById('voiceBtn').classList.remove('recording'); document.getElementById('voiceBtn').textContent = '🎤'; const blob = new Blob(audioChunks, { type: 'audio/wav' }); const text = await transcribe(blob); if (text) { const m = text.match(/(\d{1,2}):?(\d{2})?/); const time = m ? `${String(m[1]).padStart(2, '0')}:${String(m[2] || '00').padStart(2, '0')}` : '10:00'; document.getElementById('eventTitle').value = text.replace(/\d{1,2}:?\d{2}/g, '').trim() || 'Termin'; document.getElementById('eventTime').value = time; } }; mediaRecorder.start(); } catch { showToast('Mikrofon verweigert', false); } }
+        async function toggleVoiceNote() { if (isRecording) { mediaRecorder.stop(); return; } try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; isRecording = true; document.getElementById('voiceNoteBtn').classList.add('recording'); document.getElementById('voiceNoteBtn').textContent = '🛑'; mediaRecorder.ondataavailable = e => audioChunks.push(e.data); mediaRecorder.onstop = async () => { isRecording = false; document.getElementById('voiceNoteBtn').classList.remove('recording'); document.getElementById('voiceNoteBtn').textContent = '🎤'; const blob = new Blob(audioChunks, { type: 'audio/wav' }); const text = await transcribe(blob); if (text) { showToast('Verarbeite mit KI...', true); const processed = await processNoteWithAI(text); document.getElementById('noteInput').value = processed; showToast('Notiz verarbeitet ✓', true); } }; mediaRecorder.start(); } catch { showToast('Mikrofon verweigert', false); } }
+        async function processNoteWithAI(text) { try { const response = await fetch('/api/process', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) }); const data = await response.json(); return data.processed || text; } catch (error) { console.error('Error:', error); return text; } }
+        async function transcribe(blob) { showToast('Transkribiere...', true); try { const uploadRes = await fetch('https://api.assemblyai.com/v2/upload', { method: 'POST', headers: { 'Authorization': ASSEMBLY_AI_TOKEN }, body: blob }); const uploadData = await uploadRes.json(); const transcribeRes = await fetch('https://api.assemblyai.com/v2/transcript', { method: 'POST', headers: { 'Authorization': ASSEMBLY_AI_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ audio_url: uploadData.upload_url, language_code: 'de' }) }); const transcribeData = await transcribeRes.json(); for (let i = 0; i < 60; i++) { const checkRes = await fetch(`https://api.assemblyai.com/v2/transcript/${transcribeData.id}`, { headers: { 'Authorization': ASSEMBLY_AI_TOKEN } }); const checkData = await checkRes.json(); if (checkData.status === 'completed') return checkData.text; if (checkData.status === 'error') return null; await new Promise(r => setTimeout(r, 1000)); } } catch { showToast('Fehler bei Transkription', false); } return null; }
+        function exportJSON() { const json = JSON.stringify({ events: app.events, notes: app.notes }, null, 2); downloadFile(json, `backup-${new Date().toISOString().slice(0, 10)}.json`, 'application/json'); }
+        function exportCSV() { let csv = 'Datum,Uhrzeit,Titel\n'; app.events.forEach(e => { csv += `"${e.date}","${e.time}","${e.title.replace(/"/g, '""')}"\n`; }); downloadFile(csv, `export-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv'); }
+        function downloadFile(content, filename, type) { const blob = new Blob([content], { type }), url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+        function deleteAll() { if (confirm('Wirklich löschen?')) { app.events = []; app.notes = []; saveData(); renderCalendar(); renderNotes(); renderEvents(); renderWeekEvents(); showToast('Gelöscht', true); } }
+        function saveData() { localStorage.setItem('kalender-v3', JSON.stringify(app)); }
+        function loadData() { const stored = localStorage.getItem('kalender-v3'); if (stored) { const data = JSON.parse(stored); app.events = data.events || []; app.notes = data.notes || []; } }
+        function showToast(msg, success) { const t = document.createElement('div'); t.className = `toast ${success ? 'success' : ''}`; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
+        init();
+    </script>
+</body>
+</html>
