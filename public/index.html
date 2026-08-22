@@ -962,11 +962,64 @@
             }
         }
 
-        async function transcribe() {
-            const audioBlob = new Blob(audioChunks, {type: 'audio/wav'});
+        function transcribe() {
+            showToast('⏳ Transkribiere mit Web Speech...');
 
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                showToast('❌ Web Speech nicht unterstützt');
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'de-DE';
+            recognition.interimResults = true;
+            recognition.continuous = true;
+
+            recognition.onstart = () => {
+                showToast('🎤 Höre zu...');
+            };
+
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+
+                if (transcript && event.results[event.results.length - 1].isFinal) {
+                    document.getElementById('noteInput').value = transcript;
+                    recognition.stop();
+                    showToast('✓ Transkription OK!');
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Fehler:', event.error);
+                showToast(`❌ Fehler: ${event.error}`);
+            };
+
+            recognition.onend = () => {
+                // Fertig
+            };
+
+            // Starte Erkennung mit Audio-Daten
             try {
-                // Versuche AssemblyAI zuerst
+                const audioBlob = new Blob(audioChunks, {type: 'audio/wav'});
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+
+                // Versuche AssemblyAI parallel
+                tryAssemblyAI(audioBlob);
+
+                // Fallback: Web Speech direkt
+                recognition.start();
+            } catch (e) {
+                recognition.start();
+            }
+        }
+
+        async function tryAssemblyAI(audioBlob) {
+            try {
                 const formData = new FormData();
                 formData.append('audio', audioBlob);
 
@@ -976,72 +1029,36 @@
                     body: formData
                 });
 
-                if (!uploadRes.ok) throw new Error('AssemblyAI Upload fehlgeschlagen');
+                if (!uploadRes.ok) return; // Stille, verwende Web Speech
 
                 const uploadData = await uploadRes.json();
-                const audioUrl = uploadData.upload_url;
-
                 const transcriptRes = await fetch('https://api.assemblyai.com/v2/transcript', {
                     method: 'POST',
                     headers: {
                         'Authorization': ASSEMBLY_AI_TOKEN,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({audio_url: audioUrl})
+                    body: JSON.stringify({audio_url: uploadData.upload_url})
                 });
 
-                if (!transcriptRes.ok) throw new Error('Transkription fehlgeschlagen');
+                let data = await transcriptRes.json();
 
-                let transcriptData = await transcriptRes.json();
-                let pollCount = 0;
-                const maxPolls = 30;
-
-                while (transcriptData.status === 'processing' && pollCount < maxPolls) {
-                    await new Promise(r => setTimeout(r, 2000));
-                    const checkRes = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptData.id}`, {
+                // Poll für Status
+                while (data.status === 'processing') {
+                    await new Promise(r => setTimeout(r, 1000));
+                    const res = await fetch(`https://api.assemblyai.com/v2/transcript/${data.id}`, {
                         headers: {'Authorization': ASSEMBLY_AI_TOKEN}
                     });
-                    transcriptData = await checkRes.json();
-                    pollCount++;
+                    data = await res.json();
                 }
 
-                if (transcriptData.status === 'completed' && transcriptData.text) {
-                    document.getElementById('noteInput').value = transcriptData.text;
-                    showToast('✓ Transkription erfolgreich!');
-                } else {
-                    throw new Error('Transkription nicht abgeschlossen');
+                if (data.status === 'completed' && data.text) {
+                    document.getElementById('noteInput').value = data.text;
+                    showToast('✓ AssemblyAI Transkription!');
                 }
-            } catch (error) {
-                console.warn('AssemblyAI fehlgeschlagen, verwende Web Speech API:', error);
-                useWebSpeechFallback(audioBlob);
+            } catch (e) {
+                // Stille - Web Speech läuft bereits
             }
-        }
-
-        function useWebSpeechFallback(audioBlob) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SpeechRecognition) {
-                    showToast('❌ Spracherkennung nicht unterstützt');
-                    return;
-                }
-
-                const recognition = new SpeechRecognition();
-                recognition.lang = 'de-DE';
-                recognition.onresult = (event) => {
-                    const transcript = Array.from(event.results)
-                        .map(result => result[0].transcript)
-                        .join('');
-                    document.getElementById('noteInput').value = transcript;
-                    showToast('✓ Web Speech OK');
-                };
-                recognition.onerror = (event) => {
-                    console.error('Web Speech Fehler:', event.error);
-                    showToast('❌ Spracherkennung fehlgeschlagen');
-                };
-                recognition.start();
-            };
-            reader.readAsArrayBuffer(audioBlob);
         }
 
         // UI
