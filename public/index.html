@@ -3,178 +3,1101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#6366f1">
     <title>Kalender & Notizen</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #333; }
-        header { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 16px; text-align: center; position: sticky; top: 0; z-index: 100; }
-        header h1 { font-size: 24px; }
-        .tabs { display: flex; background: white; border-bottom: 2px solid #e5e7eb; position: sticky; top: 60px; z-index: 90; overflow-x: auto; }
-        .tab-btn { flex: 1; min-width: 100px; padding: 12px; border: none; background: white; cursor: pointer; font-size: 14px; color: #666; border-bottom: 3px solid transparent; white-space: nowrap; }
-        .tab-btn.active { color: #6366f1; border-bottom-color: #6366f1; background: #f3f4f6; }
-        .content { display: none; padding: 16px; padding-bottom: 60px; }
-        .content.active { display: block; }
-        .card { background: white; border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 16px; }
-        .weekday { text-align: center; font-weight: 600; color: #666; font-size: 12px; padding: 8px 0; }
-        .day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #f9fafb; cursor: pointer; border: 2px solid transparent; font-size: 13px; }
-        .day:hover { background: #ede9fe; }
-        .day.today { background: #dbeafe; border-color: #0084ff; font-weight: 600; color: #0084ff; }
-        .day.selected { background: #6366f1; color: white; border-color: #6366f1; }
-        .day.other-month { color: #ccc; cursor: default; }
-        .day.has-event::after { content: '•'; position: absolute; font-size: 20px; color: #f59e0b; bottom: -4px; }
-        input, textarea { padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-family: inherit; font-size: 14px; width: 100%; }
-        textarea { min-height: 80px; resize: vertical; }
-        input:focus, textarea:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
-        .btn { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
-        .btn-primary { background: #6366f1; color: white; }
-        .btn-primary:hover { background: #4f46e5; }
-        .btn-danger { background: #ef4444; color: white; }
-        .item { background: #f9fafb; padding: 12px; border-radius: 6px; border-left: 4px solid #6366f1; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-        .item.done { opacity: 0.6; background: #f0fdf4; }
-        .item.done .item-text { text-decoration: line-through; color: #999; }
-        .item-status { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
-        .item-text { flex: 1; }
-        .item-date { font-size: 11px; color: #999; margin-bottom: 4px; }
-        .item-time { font-size: 12px; color: #6366f1; font-weight: 600; }
-        .btn-action { background: none; border: none; color: #999; cursor: pointer; padding: 4px; flex-shrink: 0; font-size: 14px; }
-        .btn-action:hover { color: #6366f1; }
-        .btn-delete { background: none; border: none; color: #999; cursor: pointer; padding: 4px; flex-shrink: 0; }
-        .btn-delete:hover { color: #ef4444; }
-        .empty { text-align: center; padding: 40px 16px; color: #999; }
-        .month-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .month-header h3 { font-size: 16px; }
-        .month-header button { background: #6366f1; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-        .toast { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #333; color: white; padding: 12px 16px; border-radius: 6px; z-index: 1000; animation: slideUp 0.3s; }
-        .toast.success { background: #10b981; }
-        @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .voice-btn { padding: 10px 12px; background: #e5e7eb; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
-        .voice-btn.recording { background: #ef4444; color: white; }
-        .input-row { display: flex; gap: 8px; margin-bottom: 12px; }
-        .input-row > * { flex: 1; }
-        .input-row .voice-btn { flex: 0; width: auto; }
-        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
-        .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 8px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        .modal-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
-        .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
-        .modal-buttons button { flex: 1; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .tab.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+        }
+
+        .tab:hover {
+            background: #f9f9f9;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .calendar-header h2 {
+            font-size: 20px;
+            color: #333;
+        }
+
+        .nav-btn {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #4f46e5;
+        }
+
+        .day-label {
+            text-align: center;
+            font-weight: 600;
+            color: #666;
+            padding: 8px 0;
+        }
+
+        .day {
+            aspect-ratio: 1;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            background: white;
+            font-size: 12px;
+        }
+
+        .day:hover {
+            border-color: #6366f1;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+        }
+
+        .day.selected {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .day.has-event::after {
+            content: '●';
+            color: #f59e0b;
+            font-size: 16px;
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+        }
+
+        .day-number {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .event-item {
+            font-size: 10px;
+            background: rgba(99, 102, 241, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .week-view {
+            display: none;
+        }
+
+        .week-view.active {
+            display: block;
+        }
+
+        .week-grid {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .week-day {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #6366f1;
+        }
+
+        .week-day-header {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .week-event {
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 6px;
+            font-size: 13px;
+            border-left: 3px solid #f59e0b;
+        }
+
+        .week-event.no-events {
+            color: #999;
+            font-style: italic;
+        }
+
+        .week-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .week-nav h3 {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        input, select {
+            flex: 1;
+            min-width: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #4f46e5;
+        }
+
+        button.secondary {
+            background: #6b7280;
+        }
+
+        button.secondary:hover {
+            background: #4b5563;
+        }
+
+        .item {
+            background: white;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #6366f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .item.done {
+            opacity: 0.6;
+            background: #f0fdf4;
+        }
+
+        .item-text {
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .item.done .item-text {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 10px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-small:hover {
+            background: #4f46e5;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+        }
+
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+
+        .voice-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #6366f1;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px 0;
+        }
+
+        .voice-btn:hover {
+            background: #4f46e5;
+            transform: scale(1.05);
+        }
+
+        .voice-btn.recording {
+            background: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            z-index: 2000;
+            animation: slideUp 0.3s ease;
+            max-width: 400px;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #6366f1;
+            margin-right: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .calendar {
+                gap: 4px;
+            }
+
+            .day {
+                font-size: 10px;
+                padding: 4px;
+            }
+
+            .tab {
+                font-size: 12px;
+            }
+
+            input, select {
+                min-width: 100px;
+            }
+        }
+
+        .settings-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .setting-group {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #6366f1;
+        }
+
+        .setting-group h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .setting-group button {
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-    <header><h1>📅 Kalender & Notizen</h1></header>
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('calendar')">Kalender</button>
-        <button class="tab-btn" onclick="switchTab('week')">Woche</button>
-        <button class="tab-btn" onclick="switchTab('notes')">Notizen</button>
-        <button class="tab-btn" onclick="switchTab('settings')">Einstellungen</button>
-    </div>
-    <div id="calendar" class="content active">
-        <div class="card">
-            <div class="month-header">
-                <button onclick="prevMonth()">← Zurück</button>
-                <h3 id="monthName"></h3>
-                <button onclick="nextMonth()">Weiter →</button>
-            </div>
-            <div class="calendar" id="calendarGrid"></div>
+    <div class="container">
+        <div class="header">
+            <h1>📅 Kalender & Notizen</h1>
         </div>
-        <div class="card">
-            <h3 id="selectedDateText"></h3>
-            <div class="input-row">
-                <input type="text" id="eventTitle" placeholder="Termin">
-                <input type="time" id="eventTime">
-                <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤</button>
-            </div>
-            <button class="btn btn-primary" onclick="addEvent()" style="width: 100%;">+ Termin</button>
-            <div id="eventsList" style="margin-top: 12px;"></div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('kalender')">Kalender</div>
+            <div class="tab" onclick="showTab('woche')">Woche</div>
+            <div class="tab" onclick="showTab('notizen')">Notizen</div>
+            <div class="tab" onclick="showTab('einstellungen')">⚙️</div>
         </div>
-    </div>
-    <div id="week" class="content">
-        <div class="card">
-            <div class="month-header">
-                <button onclick="prevWeek()">← Zurück</button>
-                <h3 id="weekInfo"></h3>
-                <button onclick="nextWeek()">Weiter →</button>
+
+        <div class="content">
+            <!-- KALENDER TAB -->
+            <div id="kalender" class="tab-content active">
+                <div class="input-group">
+                    <input type="text" id="eventTitle" placeholder="Termin (z.B. Zahnarzt)">
+                    <input type="time" id="eventTime" placeholder="Zeit">
+                    <button onclick="addEvent()">+ Termin</button>
+                </div>
+
+                <div class="calendar-header">
+                    <button class="nav-btn" onclick="prevMonth()">← Zurück</button>
+                    <h2 id="monthYear"></h2>
+                    <button class="nav-btn" onclick="nextMonth()">Weiter →</button>
+                </div>
+
+                <div id="calendar" class="calendar"></div>
+
+                <div id="dayEvents" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 10px; color: #333;">Termine für <span id="selectedDateDisplay">heute</span></h3>
+                    <div id="eventsList"></div>
+                </div>
             </div>
-            <div id="weekEventsList"></div>
-        </div>
-    </div>
-    <div id="notes" class="content">
-        <div class="card">
-            <h3>📝 Neue Notiz</h3>
-            <textarea id="noteInput" placeholder="Notiz schreiben..."></textarea>
-            <div class="input-row" style="margin-top: 12px;">
-                <button class="btn btn-primary" onclick="addNote()">Speichern</button>
-                <button class="voice-btn" id="voiceNoteBtn" onclick="toggleVoiceNote()">🎤</button>
+
+            <!-- WOCHE TAB -->
+            <div id="woche" class="tab-content">
+                <div class="week-nav">
+                    <button class="nav-btn" onclick="prevWeek()">← Vorherige Woche</button>
+                    <h3 id="weekHeader"></h3>
+                    <button class="nav-btn" onclick="nextWeek()">Nächste Woche →</button>
+                </div>
+                <div id="weekView" class="week-grid"></div>
             </div>
-            <div id="notesList" style="margin-top: 16px;"></div>
-        </div>
-    </div>
-    <div id="settings" class="content">
-        <div class="card">
-            <h3>📤 Export</h3>
-            <button class="btn btn-primary" onclick="exportJSON()" style="width: 100%; margin-bottom: 8px;">JSON Export</button>
-            <button class="btn btn-primary" onclick="exportCSV()" style="width: 100%; margin-bottom: 16px;">CSV Export</button>
-            <h3 style="margin-top: 16px;">⚠️ Löschen</h3>
-            <button class="btn btn-danger" onclick="deleteAll()" style="width: 100%;">Alle Daten löschen</button>
+
+            <!-- NOTIZEN TAB -->
+            <div id="notizen" class="tab-content">
+                <div class="input-group">
+                    <input type="text" id="noteInput" placeholder="Notiz eingeben..." onkeypress="if(event.key==='Enter') addNote()">
+                    <button id="voiceBtn" class="voice-btn" onclick="toggleVoice()" title="Mikrofon">🎤</button>
+                </div>
+
+                <div id="notesList"></div>
+            </div>
+
+            <!-- EINSTELLUNGEN TAB -->
+            <div id="einstellungen" class="tab-content">
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <h3>💾 Daten</h3>
+                        <button onclick="exportJSON()">JSON exportieren</button>
+                        <button class="secondary" onclick="exportCSV()" style="margin-top: 8px;">CSV exportieren</button>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3>🔄 Zurücksetzen</h3>
+                        <button class="secondary" onclick="resetAll()">Alle Daten löschen</button>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3>ℹ️ Info</h3>
+                        <p style="font-size: 13px; color: #666; margin: 10px 0;">
+                            Kalender & Notizen v2.0<br>
+                            Spracherkennung: Web Speech API (kostenloses Fallback) + AssemblyAI<br>
+                            KI-Verarbeitung: Claude API
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="editModal" class="modal">
+    <div id="modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header" id="modalTitle"></div>
-            <input type="text" id="editTitle" placeholder="Titel/Text" style="margin-bottom: 12px;">
-            <input type="time" id="editTime" style="margin-bottom: 12px; display: none;">
-            <div class="modal-buttons">
-                <button class="btn btn-primary" onclick="saveEdit()">Speichern</button>
-                <button class="btn" style="background: #e5e7eb;" onclick="closeModal()">Abbrechen</button>
+            <div class="modal-header">Notiz bearbeiten</div>
+            <input type="text" id="modalNoteText" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px;">
+            <div class="modal-actions">
+                <button class="secondary" onclick="closeModal()">Abbrechen</button>
+                <button onclick="saveModalNote()">Speichern</button>
             </div>
         </div>
     </div>
 
     <script>
+        // CONFIG
         const ASSEMBLY_AI_TOKEN = '60ceae17ec34415088596d2e6feedcd8';
-        let app = { currentDate: new Date(), selectedDate: new Date(), weekStart: new Date(), events: [], notes: [] };
-        let isRecording = false;
-        let mediaRecorder;
-        let audioChunks = [];
-        let editingItem = null;
+        const VERCEL_URL = 'https://kalender-notizen-backend-r30in84p8-sibel1.vercel.app/api/process';
+        const STORAGE_KEY = 'kalender-v3';
 
-        function init() { loadData(); renderCalendar(); renderNotes(); renderEvents(); renderWeekEvents(); }
-        function switchTab(tab) { document.querySelectorAll('.content').forEach(e => e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active')); document.getElementById(tab).classList.add('active'); event.target.classList.add('active'); }
-        function renderCalendar() { const y = app.currentDate.getFullYear(), m = app.currentDate.getMonth(); const first = new Date(y, m, 1), last = new Date(y, m + 1, 0); const start = first.getDay() === 0 ? 6 : first.getDay() - 1; const days = last.getDate(); document.getElementById('monthName').textContent = app.currentDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' }); let html = '<div style="grid-column: 1/-1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">'; html += '<div class="weekday">Mo</div><div class="weekday">Di</div><div class="weekday">Mi</div><div class="weekday">Do</div><div class="weekday">Fr</div><div class="weekday">Sa</div><div class="weekday">So</div>'; for (let i = 0; i < start; i++) html += '<div class="day other-month"></div>'; for (let i = 1; i <= days; i++) { const d = new Date(y, m, i); const isToday = isSameDate(d, new Date()); const isSelected = isSameDate(d, app.selectedDate); const hasEvent = app.events.some(e => isSameDate(new Date(e.date), d)); let cls = 'day'; if (isToday) cls += ' today'; if (isSelected) cls += ' selected'; if (hasEvent) cls += ' has-event'; html += `<div class="${cls}" onclick="selectDate(new Date(${y}, ${m}, ${i}))" style="position: relative;">${i}</div>`; } for (let i = 1; i <= (42 - days - start); i++) html += '<div class="day other-month"></div>'; html += '</div>'; document.getElementById('calendarGrid').innerHTML = html; updateSelectedDateDisplay(); }
-        function selectDate(date) { app.selectedDate = new Date(date); renderCalendar(); renderEvents(); }
-        function prevMonth() { app.currentDate.setMonth(app.currentDate.getMonth() - 1); renderCalendar(); }
-        function nextMonth() { app.currentDate.setMonth(app.currentDate.getMonth() + 1); renderCalendar(); }
-        function prevWeek() { app.weekStart.setDate(app.weekStart.getDate() - 7); renderWeekEvents(); }
-        function nextWeek() { app.weekStart.setDate(app.weekStart.getDate() + 7); renderWeekEvents(); }
-        function updateSelectedDateDisplay() { document.getElementById('selectedDateText').textContent = app.selectedDate.toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
-        function isSameDate(d1, d2) { return d1.getDate() === d2.getDate() && d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear(); }
-        function formatDate(date) { const y = date.getFullYear(), m = String(date.getMonth() + 1).padStart(2, '0'), d = String(date.getDate()).padStart(2, '0'); return `${y}-${m}-${d}`; }
-        function getWeekDates() { const start = new Date(app.weekStart); start.setDate(start.getDate() - (start.getDay() === 0 ? 6 : start.getDay() - 1)); const dates = []; for (let i = 0; i < 7; i++) { const d = new Date(start); d.setDate(d.getDate() + i); dates.push(d); } return dates; }
-        function renderWeekEvents() { const weekDates = getWeekDates(); const weekEvents = []; app.events.forEach(e => { const eDate = new Date(e.date); weekDates.forEach(d => { if (isSameDate(d, eDate)) weekEvents.push({ ...e, actualDate: d }); }); }); weekEvents.sort((a, b) => new Date(a.actualDate).getTime() - new Date(b.actualDate).getTime() || a.time.localeCompare(b.time)); const start = weekDates[0].toLocaleDateString('de-DE', { day: 'numeric', month: 'short' }); const end = weekDates[6].toLocaleDateString('de-DE', { day: 'numeric', month: 'short' }); document.getElementById('weekInfo').textContent = `${start} - ${end}`; let html = weekEvents.length === 0 ? '<div class="empty">Keine Termine diese Woche</div>' : weekEvents.map(e => `<div class="item"><div class="item-text"><div class="item-date">${new Date(e.actualDate).toLocaleDateString('de-DE', { weekday: 'short', month: 'short', day: 'numeric' })} ${e.time}</div><div>${e.title}</div></div><button class="btn-action" onclick="openEditEvent(${e.id})">✏️</button><button class="btn-delete" onclick="deleteEvent(${e.id})">✕</button></div>`).join(''); document.getElementById('weekEventsList').innerHTML = html; }
-        function addEvent() { const title = document.getElementById('eventTitle').value.trim(); const time = document.getElementById('eventTime').value; if (!title) return showToast('Termin erforderlich', false); app.events.push({ id: Date.now(), date: formatDate(app.selectedDate), title, time: time || '10:00' }); saveData(); document.getElementById('eventTitle').value = ''; document.getElementById('eventTime').value = ''; renderCalendar(); renderEvents(); renderWeekEvents(); showToast('Termin hinzugefügt ✓', true); }
-        function renderEvents() { const dateStr = formatDate(app.selectedDate); const events = app.events.filter(e => e.date === dateStr); let html = events.length === 0 ? '<div class="empty">Keine Termine</div>' : events.sort((a, b) => a.time.localeCompare(b.time)).map(e => `<div class="item"><div class="item-text"><div class="item-time">${e.time}</div><div>${e.title}</div></div><button class="btn-action" onclick="openEditEvent(${e.id})">✏️</button><button class="btn-delete" onclick="deleteEvent(${e.id})">✕</button></div>`).join(''); document.getElementById('eventsList').innerHTML = html; }
-        function deleteEvent(id) { app.events = app.events.filter(e => e.id !== id); saveData(); renderCalendar(); renderEvents(); renderWeekEvents(); }
-        function openEditEvent(id) { const e = app.events.find(x => x.id === id); if (e) { editingItem = { type: 'event', id, ...e }; document.getElementById('modalTitle').textContent = '✏️ Termin bearbeiten'; document.getElementById('editTitle').value = e.title; document.getElementById('editTime').value = e.time; document.getElementById('editTime').style.display = 'block'; document.getElementById('editModal').classList.add('active'); } }
-        function addNote() { const text = document.getElementById('noteInput').value.trim(); if (!text) return showToast('Notiz erforderlich', false); app.notes.push({ id: Date.now(), text, done: false, created: new Date().toISOString() }); saveData(); document.getElementById('noteInput').value = ''; renderNotes(); showToast('Notiz gespeichert ✓', true); }
-        function renderNotes() { let html = app.notes.length === 0 ? '<div class="empty">Keine Notizen</div>' : [...app.notes].reverse().map(n => `<div class="item ${n.done ? 'done' : ''}"><button class="item-status" onclick="toggleStatus(${n.id})">${n.done ? '✅' : '☐'}</button><div class="item-text"><div class="item-date">${new Date(n.created).toLocaleDateString('de-DE')}</div><div>${n.text}</div></div><button class="btn-action" onclick="openEditNote(${n.id})">✏️</button><button class="btn-delete" onclick="deleteNote(${n.id})">✕</button></div>`).join(''); document.getElementById('notesList').innerHTML = html; }
-        function toggleStatus(id) { const n = app.notes.find(x => x.id === id); if (n) { n.done = !n.done; saveData(); renderNotes(); } }
-        function deleteNote(id) { app.notes = app.notes.filter(n => n.id !== id); saveData(); renderNotes(); }
-        function openEditNote(id) { const n = app.notes.find(x => x.id === id); if (n) { editingItem = { type: 'note', id, ...n }; document.getElementById('modalTitle').textContent = '✏️ Notiz bearbeiten'; document.getElementById('editTitle').value = n.text; document.getElementById('editTime').style.display = 'none'; document.getElementById('editModal').classList.add('active'); } }
-        function saveEdit() { if (!editingItem) return; const val = document.getElementById('editTitle').value.trim(); if (!val) return showToast('Inhalt erforderlich', false); if (editingItem.type === 'event') { const e = app.events.find(x => x.id === editingItem.id); if (e) { e.title = val; e.time = document.getElementById('editTime').value || e.time; saveData(); renderCalendar(); renderEvents(); renderWeekEvents(); showToast('Termin aktualisiert ✓', true); } } else if (editingItem.type === 'note') { const n = app.notes.find(x => x.id === editingItem.id); if (n) { n.text = val; saveData(); renderNotes(); showToast('Notiz aktualisiert ✓', true); } } closeModal(); }
-        function closeModal() { document.getElementById('editModal').classList.remove('active'); editingItem = null; }
-        async function toggleVoice() { if (isRecording) { mediaRecorder.stop(); return; } try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; isRecording = true; document.getElementById('voiceBtn').classList.add('recording'); document.getElementById('voiceBtn').textContent = '🛑'; mediaRecorder.ondataavailable = e => audioChunks.push(e.data); mediaRecorder.onstop = async () => { isRecording = false; document.getElementById('voiceBtn').classList.remove('recording'); document.getElementById('voiceBtn').textContent = '🎤'; const blob = new Blob(audioChunks, { type: 'audio/wav' }); const text = await transcribe(blob); if (text) { const m = text.match(/(\d{1,2}):?(\d{2})?/); const time = m ? `${String(m[1]).padStart(2, '0')}:${String(m[2] || '00').padStart(2, '0')}` : '10:00'; document.getElementById('eventTitle').value = text.replace(/\d{1,2}:?\d{2}/g, '').trim() || 'Termin'; document.getElementById('eventTime').value = time; } }; mediaRecorder.start(); } catch { showToast('Mikrofon verweigert', false); } }
-        async function toggleVoiceNote() { if (isRecording) { mediaRecorder.stop(); return; } try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); mediaRecorder = new MediaRecorder(stream); audioChunks = []; isRecording = true; document.getElementById('voiceNoteBtn').classList.add('recording'); document.getElementById('voiceNoteBtn').textContent = '🛑'; mediaRecorder.ondataavailable = e => audioChunks.push(e.data); mediaRecorder.onstop = async () => { isRecording = false; document.getElementById('voiceNoteBtn').classList.remove('recording'); document.getElementById('voiceNoteBtn').textContent = '🎤'; const blob = new Blob(audioChunks, { type: 'audio/wav' }); const text = await transcribe(blob); if (text) { showToast('Verarbeite mit KI...', true); const processed = await processNoteWithAI(text); document.getElementById('noteInput').value = processed; showToast('Notiz verarbeitet ✓', true); } }; mediaRecorder.start(); } catch { showToast('Mikrofon verweigert', false); } }
-        async function processNoteWithAI(text) { try { const response = await fetch('https://kalender-notizen-backend-r30in84p8-sibel1.vercel.app/api/process', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) }); const data = await response.json(); return data.processed || text; } catch (error) { console.error('Error:', error); return text; } }
-        async function transcribe(blob) { showToast('Transkribiere...', true); try { const uploadRes = await fetch('https://api.assemblyai.com/v2/upload', { method: 'POST', headers: { 'Authorization': ASSEMBLY_AI_TOKEN }, body: blob }); const uploadData = await uploadRes.json(); const transcribeRes = await fetch('https://api.assemblyai.com/v2/transcript', { method: 'POST', headers: { 'Authorization': ASSEMBLY_AI_TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ audio_url: uploadData.upload_url, language_code: 'de' }) }); const transcribeData = await transcribeRes.json(); for (let i = 0; i < 60; i++) { const checkRes = await fetch(`https://api.assemblyai.com/v2/transcript/${transcribeData.id}`, { headers: { 'Authorization': ASSEMBLY_AI_TOKEN } }); const checkData = await checkRes.json(); if (checkData.status === 'completed') return checkData.text; if (checkData.status === 'error') return null; await new Promise(r => setTimeout(r, 1000)); } } catch { showToast('Fehler bei Transkription', false); } return null; }
-        function exportJSON() { const json = JSON.stringify({ events: app.events, notes: app.notes }, null, 2); downloadFile(json, `backup-${new Date().toISOString().slice(0, 10)}.json`, 'application/json'); }
-        function exportCSV() { let csv = 'Datum,Uhrzeit,Titel\n'; app.events.forEach(e => { csv += `"${e.date}","${e.time}","${e.title.replace(/"/g, '""')}"\n`; }); downloadFile(csv, `export-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv'); }
-        function downloadFile(content, filename, type) { const blob = new Blob([content], { type }), url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
-        function deleteAll() { if (confirm('Wirklich löschen?')) { app.events = []; app.notes = []; saveData(); renderCalendar(); renderNotes(); renderEvents(); renderWeekEvents(); showToast('Gelöscht', true); } }
-        function saveData() { localStorage.setItem('kalender-v3', JSON.stringify(app)); }
-        function loadData() { const stored = localStorage.getItem('kalender-v3'); if (stored) { const data = JSON.parse(stored); app.events = data.events || []; app.notes = data.notes || []; } }
-        function showToast(msg, success) { const t = document.createElement('div'); t.className = `toast ${success ? 'success' : ''}`; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
+        let currentDate = new Date();
+        let selectedDate = new Date();
+        let weekStart = getMonday(new Date());
+        let recognitionActive = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let editingNoteId = null;
+
+        // STATE
+        let appState = {
+            currentDate: new Date().toISOString().split('T')[0],
+            selectedDate: new Date().toISOString().split('T')[0],
+            weekStart: getMonday(new Date()).toISOString().split('T')[0],
+            events: [],
+            notes: []
+        };
+
+        // INIT
+        function init() {
+            loadState();
+            renderCalendar();
+            renderNotes();
+            renderWeekEvents();
+        }
+
+        // STORAGE
+        function loadState() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                appState = JSON.parse(saved);
+                currentDate = new Date(appState.currentDate);
+                selectedDate = new Date(appState.selectedDate);
+                weekStart = new Date(appState.weekStart);
+            }
+        }
+
+        function saveState() {
+            appState.currentDate = currentDate.toISOString().split('T')[0];
+            appState.selectedDate = selectedDate.toISOString().split('T')[0];
+            appState.weekStart = weekStart.toISOString().split('T')[0];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        }
+
+        // CALENDAR
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+            document.getElementById('monthYear').textContent = `${firstDay.toLocaleDateString('de-DE', {month: 'long', year: 'numeric'})}`;
+
+            const cal = document.getElementById('calendar');
+            cal.innerHTML = '';
+
+            const dayLabels = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+            dayLabels.forEach(label => {
+                const dayLabel = document.createElement('div');
+                dayLabel.className = 'day-label';
+                dayLabel.textContent = label;
+                cal.appendChild(dayLabel);
+            });
+
+            let date = new Date(startDate);
+            for (let i = 0; i < 42; i++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'day';
+
+                if (date.getMonth() === month) {
+                    const dateStr = formatDate(date);
+                    const eventsForDay = appState.events.filter(e => e.date === dateStr);
+
+                    dayEl.innerHTML = `<div class="day-number">${date.getDate()}</div>`;
+                    eventsForDay.forEach(e => {
+                        const eventEl = document.createElement('div');
+                        eventEl.className = 'event-item';
+                        eventEl.textContent = `${e.time} ${e.title}`;
+                        dayEl.appendChild(eventEl);
+                    });
+
+                    if (eventsForDay.length > 0) dayEl.classList.add('has-event');
+                    if (dateStr === formatDate(selectedDate)) dayEl.classList.add('selected');
+
+                    dayEl.onclick = () => selectDate(date);
+                } else {
+                    dayEl.style.opacity = '0.3';
+                }
+
+                cal.appendChild(dayEl);
+                date.setDate(date.getDate() + 1);
+            }
+
+            updateDayEvents();
+        }
+
+        function selectDate(date) {
+            selectedDate = new Date(date);
+            renderCalendar();
+        }
+
+        function prevMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        function addEvent() {
+            const title = document.getElementById('eventTitle').value;
+            const time = document.getElementById('eventTime').value;
+
+            if (!title) {
+                showToast('Bitte Termin eingeben');
+                return;
+            }
+
+            const event = {
+                id: Date.now(),
+                date: formatDate(selectedDate),
+                title,
+                time: time || '00:00'
+            };
+
+            appState.events.push(event);
+            saveState();
+            document.getElementById('eventTitle').value = '';
+            document.getElementById('eventTime').value = '';
+            renderCalendar();
+            showToast('Termin hinzugefügt ✓');
+        }
+
+        function updateDayEvents() {
+            const dateStr = formatDate(selectedDate);
+            const dayName = selectedDate.toLocaleDateString('de-DE', {weekday: 'long'});
+            document.getElementById('selectedDateDisplay').textContent = `${dayName}, ${selectedDate.toLocaleDateString('de-DE')}`;
+
+            const events = appState.events.filter(e => e.date === dateStr);
+            const list = document.getElementById('eventsList');
+            list.innerHTML = '';
+
+            if (events.length === 0) {
+                list.innerHTML = '<p style="color: #999; font-style: italic;">Keine Termine</p>';
+                return;
+            }
+
+            events.forEach(e => {
+                const el = document.createElement('div');
+                el.className = 'item';
+                el.innerHTML = `
+                    <span class="item-text">${e.time} - ${e.title}</span>
+                    <div class="item-actions">
+                        <button class="btn-small btn-delete" onclick="deleteEvent(${e.id})">✕</button>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        function deleteEvent(id) {
+            appState.events = appState.events.filter(e => e.id !== id);
+            saveState();
+            renderCalendar();
+            showToast('Termin gelöscht');
+        }
+
+        // WEEK VIEW
+        function getMonday(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        function renderWeekEvents() {
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+
+            document.getElementById('weekHeader').textContent =
+                `${weekStart.toLocaleDateString('de-DE')} - ${weekEnd.toLocaleDateString('de-DE')}`;
+
+            const weekView = document.getElementById('weekView');
+            weekView.innerHTML = '';
+
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(weekStart);
+                date.setDate(date.getDate() + i);
+                const dateStr = formatDate(date);
+                const dayName = date.toLocaleDateString('de-DE', {weekday: 'long'});
+
+                const dayEl = document.createElement('div');
+                dayEl.className = 'week-day';
+                dayEl.innerHTML = `<div class="week-day-header">${dayName}, ${date.toLocaleDateString('de-DE')}</div>`;
+
+                const events = appState.events.filter(e => e.date === dateStr);
+                if (events.length === 0) {
+                    const noEvents = document.createElement('div');
+                    noEvents.className = 'week-event no-events';
+                    noEvents.textContent = 'Keine Termine';
+                    dayEl.appendChild(noEvents);
+                } else {
+                    events.forEach(e => {
+                        const eventEl = document.createElement('div');
+                        eventEl.className = 'week-event';
+                        eventEl.textContent = `${e.time} - ${e.title}`;
+                        dayEl.appendChild(eventEl);
+                    });
+                }
+
+                weekView.appendChild(dayEl);
+            }
+        }
+
+        function prevWeek() {
+            weekStart.setDate(weekStart.getDate() - 7);
+            renderWeekEvents();
+        }
+
+        function nextWeek() {
+            weekStart.setDate(weekStart.getDate() + 7);
+            renderWeekEvents();
+        }
+
+        // NOTES
+        function renderNotes() {
+            const list = document.getElementById('notesList');
+            list.innerHTML = '';
+
+            if (appState.notes.length === 0) {
+                list.innerHTML = '<p style="color: #999; font-style: italic; text-align: center;">Keine Notizen</p>';
+                return;
+            }
+
+            appState.notes.forEach(note => {
+                const el = document.createElement('div');
+                el.className = `item ${note.done ? 'done' : ''}`;
+                el.innerHTML = `
+                    <input type="checkbox" class="checkbox" ${note.done ? 'checked' : ''} onchange="toggleNote(${note.id})">
+                    <span class="item-text" onclick="editNote(${note.id})" style="cursor: pointer;">${note.text}</span>
+                    <div class="item-actions">
+                        <button class="btn-small btn-delete" onclick="deleteNote(${note.id})">✕</button>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        function addNote() {
+            const input = document.getElementById('noteInput');
+            const text = input.value.trim();
+
+            if (!text) {
+                showToast('Bitte Notiz eingeben');
+                return;
+            }
+
+            input.value = '';
+            input.disabled = true;
+
+            processNoteWithAI(text).then(processed => {
+                const note = {
+                    id: Date.now(),
+                    text: processed || text,
+                    done: false,
+                    created: new Date().toISOString()
+                };
+
+                appState.notes.unshift(note);
+                saveState();
+                renderNotes();
+                showToast('Notiz hinzugefügt ✓');
+                input.disabled = false;
+            }).catch(err => {
+                console.error('Fehler bei AI-Verarbeitung:', err);
+                const note = {
+                    id: Date.now(),
+                    text,
+                    done: false,
+                    created: new Date().toISOString()
+                };
+                appState.notes.unshift(note);
+                saveState();
+                renderNotes();
+                showToast('Notiz hinzugefügt (ohne KI-Verarbeitung)');
+                input.disabled = false;
+            });
+        }
+
+        async function processNoteWithAI(text) {
+            try {
+                const response = await fetch(VERCEL_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text})
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                return data.processed || text;
+            } catch (error) {
+                console.error('AI-Verarbeitung fehlgeschlagen:', error);
+                return text;
+            }
+        }
+
+        function toggleNote(id) {
+            const note = appState.notes.find(n => n.id === id);
+            if (note) {
+                note.done = !note.done;
+                saveState();
+                renderNotes();
+            }
+        }
+
+        function editNote(id) {
+            const note = appState.notes.find(n => n.id === id);
+            if (note) {
+                editingNoteId = id;
+                document.getElementById('modalNoteText').value = note.text;
+                document.getElementById('modal').classList.add('active');
+            }
+        }
+
+        function saveModalNote() {
+            const note = appState.notes.find(n => n.id === editingNoteId);
+            if (note) {
+                note.text = document.getElementById('modalNoteText').value;
+                saveState();
+                renderNotes();
+                closeModal();
+                showToast('Notiz aktualisiert ✓');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            editingNoteId = null;
+        }
+
+        function deleteNote(id) {
+            appState.notes = appState.notes.filter(n => n.id !== id);
+            saveState();
+            renderNotes();
+            showToast('Notiz gelöscht');
+        }
+
+        // VOICE RECOGNITION
+        function toggleVoice() {
+            if (recognitionActive) {
+                stopVoice();
+            } else {
+                startVoice();
+            }
+        }
+
+        function startVoice() {
+            recognitionActive = true;
+            document.getElementById('voiceBtn').classList.add('recording');
+
+            navigator.mediaDevices.getUserMedia({audio: true})
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = transcribe;
+                    mediaRecorder.start();
+                    showToast('🎤 Aufnahme läuft...');
+                })
+                .catch(err => {
+                    console.error('Mikrofon-Fehler:', err);
+                    showToast('❌ Mikrofon-Zugriff verweigert');
+                    recognitionActive = false;
+                    document.getElementById('voiceBtn').classList.remove('recording');
+                });
+        }
+
+        function stopVoice() {
+            if (mediaRecorder && recognitionActive) {
+                mediaRecorder.stop();
+                recognitionActive = false;
+                document.getElementById('voiceBtn').classList.remove('recording');
+                showToast('⏳ Transkribiere...');
+            }
+        }
+
+        async function transcribe() {
+            const audioBlob = new Blob(audioChunks, {type: 'audio/wav'});
+
+            try {
+                // Versuche AssemblyAI zuerst
+                const formData = new FormData();
+                formData.append('audio', audioBlob);
+
+                const uploadRes = await fetch('https://api.assemblyai.com/v2/upload', {
+                    method: 'POST',
+                    headers: {'Authorization': ASSEMBLY_AI_TOKEN},
+                    body: formData
+                });
+
+                if (!uploadRes.ok) throw new Error('AssemblyAI Upload fehlgeschlagen');
+
+                const uploadData = await uploadRes.json();
+                const audioUrl = uploadData.upload_url;
+
+                const transcriptRes = await fetch('https://api.assemblyai.com/v2/transcript', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': ASSEMBLY_AI_TOKEN,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({audio_url: audioUrl})
+                });
+
+                if (!transcriptRes.ok) throw new Error('Transkription fehlgeschlagen');
+
+                let transcriptData = await transcriptRes.json();
+                let pollCount = 0;
+                const maxPolls = 30;
+
+                while (transcriptData.status === 'processing' && pollCount < maxPolls) {
+                    await new Promise(r => setTimeout(r, 2000));
+                    const checkRes = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptData.id}`, {
+                        headers: {'Authorization': ASSEMBLY_AI_TOKEN}
+                    });
+                    transcriptData = await checkRes.json();
+                    pollCount++;
+                }
+
+                if (transcriptData.status === 'completed' && transcriptData.text) {
+                    document.getElementById('noteInput').value = transcriptData.text;
+                    showToast('✓ Transkription erfolgreich!');
+                } else {
+                    throw new Error('Transkription nicht abgeschlossen');
+                }
+            } catch (error) {
+                console.warn('AssemblyAI fehlgeschlagen, verwende Web Speech API:', error);
+                useWebSpeechFallback(audioBlob);
+            }
+        }
+
+        function useWebSpeechFallback(audioBlob) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    showToast('❌ Spracherkennung nicht unterstützt');
+                    return;
+                }
+
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'de-DE';
+                recognition.onresult = (event) => {
+                    const transcript = Array.from(event.results)
+                        .map(result => result[0].transcript)
+                        .join('');
+                    document.getElementById('noteInput').value = transcript;
+                    showToast('✓ Web Speech OK');
+                };
+                recognition.onerror = (event) => {
+                    console.error('Web Speech Fehler:', event.error);
+                    showToast('❌ Spracherkennung fehlgeschlagen');
+                };
+                recognition.start();
+            };
+            reader.readAsArrayBuffer(audioBlob);
+        }
+
+        // UI
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabName)?.classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'woche') renderWeekEvents();
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // EXPORT
+        function exportJSON() {
+            const data = JSON.stringify(appState, null, 2);
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `kalender-notizen-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showToast('JSON exportiert ✓');
+        }
+
+        function exportCSV() {
+            let csv = 'Typ,Datum,Zeit,Inhalt\n';
+
+            appState.events.forEach(e => {
+                csv += `Termin,"${e.date}","${e.time}","${e.title}"\n`;
+            });
+
+            appState.notes.forEach(n => {
+                csv += `Notiz,"${n.created.split('T')[0]}","","${n.text.replace(/"/g, '""')}"\n`;
+            });
+
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `kalender-notizen-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            showToast('CSV exportiert ✓');
+        }
+
+        function resetAll() {
+            if (confirm('⚠️ Wirklich alle Daten löschen? Das kann nicht rückgängig gemacht werden!')) {
+                appState = {currentDate: new Date().toISOString().split('T')[0], selectedDate: new Date().toISOString().split('T')[0], weekStart: getMonday(new Date()).toISOString().split('T')[0], events: [], notes: []};
+                localStorage.removeItem(STORAGE_KEY);
+                renderCalendar();
+                renderNotes();
+                showToast('Alle Daten gelöscht ✓');
+            }
+        }
+
+        // START
         init();
     </script>
 </body>
